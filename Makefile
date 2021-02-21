@@ -35,16 +35,18 @@ ROOT=$(shell pwd)
 # Flags for preprocessor
 LDFLAGS = -lm -lc
 
-CPPFLAGS += -I$(ROOT) -I$(ROOT)/contrib
+CPPFLAGS += -I$(ROOT) -I$(ROOT)/contrib -I$(ROOT)/deps/t-digest-c/src
 SRCDIR := $(ROOT)/src
 MODULE_OBJ = $(SRCDIR)/rebloom.o
 MODULE_SO = $(ROOT)/redisbloom.so
+LIBTDIGEST = $(ROOT)/deps/t-digest-c/build/src/libtdigest_static.a
 
 DEPS = $(ROOT)/contrib/MurmurHash2.o \
 	   $(ROOT)/rmutil/util.o \
 	   $(SRCDIR)/sb.o \
 	   $(SRCDIR)/cf.o \
 	   $(SRCDIR)/rm_topk.o \
+	   $(SRCDIR)/rm_tdigest.o \
 	   $(SRCDIR)/topk.o \
 	   $(SRCDIR)/rm_cms.o \
 	   $(SRCDIR)/cms.o 
@@ -56,9 +58,12 @@ CFLAGS += -fprofile-arcs -ftest-coverage
 LDFLAGS += -fprofile-arcs
 endif
 
-all: $(MODULE_SO)
+all: $(MODULE_SO) 
 
-$(MODULE_SO): $(MODULE_OBJ) $(DEPS)
+$(LIBTDIGEST):
+	make -C deps/t-digest-c library_static
+
+$(MODULE_SO): $(MODULE_OBJ) $(DEPS) $(LIBTDIGEST)
 	$(LD) $^ -o $@ $(SHOBJ_LDFLAGS) $(LDFLAGS)
 
 build: all
